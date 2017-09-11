@@ -7,6 +7,7 @@ class App extends Component {
     super();
     this.state = {
       newTodoText: '',
+      currentTodo: '',
       todos: {}
     };
 
@@ -22,6 +23,7 @@ class App extends Component {
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.deleteTodo = this.deleteTodo.bind(this);
+    this.selectTodo = this.selectTodo.bind(this);
   }
 
   handleSubmit(event) {
@@ -39,8 +41,6 @@ class App extends Component {
       let newTodos = this.state.todos;
       newTodos[response.data.name] = newTodo;
       this.setState({todos: newTodos, newTodoText: ''});
-      console.log('status = ',response.status)
-      console.log('data = ',response.data);
     }).catch((err) => {
       console.log('err = ',err);
     });
@@ -51,7 +51,7 @@ class App extends Component {
     this.setState({newTodoText: event.target.value});
   }
 
-  compononentDidMount() {
+  componentDidMount() {
     console.log('in compnonentDidMount');
     axios({
       url: '/todos.json',
@@ -67,7 +67,7 @@ class App extends Component {
 
   deleteTodo(todoId) {
     axios({
-      url: '/todos.json',
+      url: `/todos/${todoId}.json`,
       baseURL: 'https://todo-list-app-77d84.firebaseio.com/',
       method: 'delete',
       data: todoId
@@ -81,6 +81,10 @@ class App extends Component {
     }).catch((err) => {
       console.log('err = ',err);
     });
+  }
+
+  selectTodo(todoId) {
+    this.setState({currentTodo: todoId});
   }
 
   renderNewTodoBox() {
@@ -97,6 +101,19 @@ class App extends Component {
     );
   }
 
+  renderSelectedTodo() {
+    let content;
+    if (this.state.currentTodo) {
+      let currentTodo = this.state.todos[this.state.currentTodo];
+      content = (
+        <div>
+          <h2>{currentTodo.title}</h2>
+        </div>
+      );
+    }
+    return content;
+  }
+
   renderTodoList() {
     let todoElements = [];
 
@@ -109,7 +126,7 @@ class App extends Component {
 
       todoElements.push(
         <div className="todo d-flex justify-content-between pb-4" key={todoId}>
-          <div className="mt-2">
+          <div className="mt-2" onClick={() => this.selectTodo(todoId)}>
             <h4>{todo.title}</h4>
             <div>{moment(todo.createdAt).calendar()}</div>
           </div>
@@ -122,8 +139,6 @@ class App extends Component {
       );
     }
 
-//    this.compnonentDidMount();
-
     return (
       <div className="todo-list">
         {todoElements}
@@ -132,13 +147,15 @@ class App extends Component {
   }
 
   render() {
-    this.compononentDidMount();
     return (
       <div className="App container-fluid">
         <div className="row pt-3">
           <div className="col-6 px-4">
             {this.renderNewTodoBox()}
             {this.renderTodoList()}
+          </div>
+          <div className="col-6 px-4">
+            {this.renderSelectedTodo()}
           </div>
         </div>
       </div>
