@@ -21,6 +21,7 @@ class App extends Component {
 
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.deleteTodo = this.deleteTodo.bind(this);
   }
 
   handleSubmit(event) {
@@ -50,7 +51,8 @@ class App extends Component {
     this.setState({newTodoText: event.target.value});
   }
 
-  compnonentDidMount() {
+  compononentDidMount() {
+    console.log('in compnonentDidMount');
     axios({
       url: '/todos.json',
       baseURL: 'https://todo-list-app-77d84.firebaseio.com/',
@@ -58,6 +60,24 @@ class App extends Component {
     }).then((response) => {
       console.log('status = ',response.status)
       console.log('data = ',response.data);
+    }).catch((err) => {
+      console.log('err = ',err);
+    });
+  }
+
+  deleteTodo(todoId) {
+    axios({
+      url: '/todos.json',
+      baseURL: 'https://todo-list-app-77d84.firebaseio.com/',
+      method: 'delete',
+      data: todoId
+    }).then((response) => {
+      console.log('in deleteTodo');
+      console.log('status = ',response.status);
+      console.log('data = ',response.data);
+      let newTodos = this.state.todos;
+      delete newTodos[todoId];
+      this.setState({todos: newTodos});
     }).catch((err) => {
       console.log('err = ',err);
     });
@@ -93,7 +113,12 @@ class App extends Component {
             <h4>{todo.title}</h4>
             <div>{moment(todo.createdAt).calendar()}</div>
           </div>
-        </div>
+        <button
+          className="ml-4 btn btn-link"
+          onClick={() => { this.deleteTodo(todoId) }}>
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
       );
     }
 
@@ -107,6 +132,7 @@ class App extends Component {
   }
 
   render() {
+    this.compononentDidMount();
     return (
       <div className="App container-fluid">
         <div className="row pt-3">
