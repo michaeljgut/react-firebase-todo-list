@@ -8,6 +8,7 @@ class App extends Component {
     this.state = {
       newTodoText: '',
       currentTodo: '',
+      currentTodoText: '',
       todos: {}
     };
 
@@ -20,13 +21,20 @@ class App extends Component {
     // feature. Then you will be able to view your data in the Firebase console
     // and it should all be clear.
 
-    this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
+    this.handleNewTodoTextChange = this.handleNewTodoTextChange.bind(this);
+    this.createTodo = this.createTodo.bind(this);
+    this.handleCurrentTodoTextChange = this.handleCurrentTodoTextChange.bind(this);
     this.deleteTodo = this.deleteTodo.bind(this);
     this.selectTodo = this.selectTodo.bind(this);
+    this.updateCurrentTodo = this.updateCurrentTodo.bind(this);
   }
 
-  handleSubmit(event) {
+  handleCurrentTodoTextChange(event){
+    event.preventDefault();
+    this.setState({currentTodoText: event.target.value})
+  }
+
+  createTodo(event) {
     event.preventDefault();
     const newTodo = {
       title: this.state.newTodoText,
@@ -46,7 +54,7 @@ class App extends Component {
     });
   }
 
-  handleChange(event) {
+  handleNewTodoTextChange(event) {
     event.preventDefault();
     this.setState({newTodoText: event.target.value});
   }
@@ -58,8 +66,7 @@ class App extends Component {
       baseURL: 'https://todo-list-app-77d84.firebaseio.com/',
       method: 'get'
     }).then((response) => {
-      console.log('status = ',response.status)
-      console.log('data = ',response.data);
+      this.setState({todos: response.data});
     }).catch((err) => {
       console.log('err = ',err);
     });
@@ -84,18 +91,39 @@ class App extends Component {
   }
 
   selectTodo(todoId) {
-    this.setState({currentTodo: todoId});
+    this.setState({currentTodo: todoId,
+                    currentTodoText: this.state.todos[todoId].title});
+  }
+
+  updateCurrentTodo(event) {
+    event.preventDefault();
+    const id = this.state.currentTodo;
+    const newTodo = {
+      title: this.state.currentTodoText
+    }
+    axios({
+      url: `/todos/${id}.json`,
+      baseURL: 'https://todo-list-app-77d84.firebaseio.com/',
+      method: 'patch',
+      data: newTodo
+    }).then((response) => {
+      let newTodos = this.state.todos;
+      newTodos[id] = newTodo;
+      this.setState({todos: newTodos});
+    }).catch((err) => {
+      console.log('err = ',err);
+    });
   }
 
   renderNewTodoBox() {
     return (
       <div className="new-todo-box pb-2">
-        <form onSubmit={this.handleSubmit}>
+        <form onSubmit={this.createTodo}>
           <input
             className="w-100"
             placeholder="What do you have to do?"
             value={this.state.newTodoText}
-            onChange={this.handleChange} />
+            onChange={this.handleNewTodoTextChange} />
         </form>
       </div>
     );
@@ -104,11 +132,13 @@ class App extends Component {
   renderSelectedTodo() {
     let content;
     if (this.state.currentTodo) {
-      let currentTodo = this.state.todos[this.state.currentTodo];
       content = (
-        <div>
-          <h2>{currentTodo.title}</h2>
-        </div>
+        <form onSubmit={this.updateCurrentTodo}>
+          <input
+            className="w-100"
+            value={this.state.currentTodoText}
+            onChange={this.handleCurrentTodoTextChange} />
+        </form>
       );
     }
     return content;
